@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#070a0d" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="description" content="KOTA MATI — 2D survival apocalypse shooter. Masuk gedung, cari senjata, makanan, dan minuman. Bertahan dari gelombang zombie. Touch + tilt untuk HP/tablet." />
+  <title>KOTA MATI — Survival Apocalypse</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23070a0d'/%3E%3Cpath d='M16 46V20h8l16 18V20h8v26h-8L24 28v18z' fill='%238fe8d0'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="app" data-state="menu">
+    <svg class="svg-sprite" aria-hidden="true" focusable="false">
+      <symbol id="i-food" viewBox="0 0 24 24">
+        <rect x="5" y="7" width="14" height="13" rx="2.5" fill="currentColor" opacity=".92"/>
+        <rect x="4" y="3.4" width="16" height="4" rx="1.6" fill="currentColor"/>
+        <path d="M8 12h8M8 15.2h5" stroke="#08110d" stroke-width="1.5" stroke-linecap="round"/>
+      </symbol>
+      <symbol id="i-water" viewBox="0 0 24 24">
+        <path d="M12 2.6c4.1 5.1 6.2 7.6 6.2 10.4a6.2 6.2 0 1 1-12.4 0C5.8 10.2 7.9 7.7 12 2.6z" fill="currentColor"/>
+        <path d="M9.3 13.5a2.8 2.8 0 0 0 2.4 3.4" stroke="#c9f2ff" stroke-width="1.4" stroke-linecap="round" fill="none" opacity=".8"/>
+      </symbol>
+      <symbol id="i-energy" viewBox="0 0 24 24">
+        <path d="M13.4 2 4.5 13.6h5.6l-1.3 8.4 9.7-13h-6.2l1.1-7z" fill="currentColor"/>
+      </symbol>
+      <symbol id="i-medkit" viewBox="0 0 24 24">
+        <rect x="3.5" y="5" width="17" height="15" rx="3" fill="currentColor"/>
+        <rect x="9" y="3.2" width="6" height="3.6" rx="1.2" fill="currentColor"/>
+        <path d="M12 8.8v8M8 12.8h8" stroke="#1a0808" stroke-width="2.4" stroke-linecap="round"/>
+      </symbol>
+      <symbol id="i-open" viewBox="0 0 24 24">
+        <path d="M4 9.2 12 5l8 4.2v7.6L12 21l-8-4.2V9.2z"/>
+        <path d="M4 9.2 12 13.4l8-4.2M12 13.4V21"/>
+      </symbol>
+    </svg>
+    <canvas id="game" aria-label="Lapangan permainan"></canvas>
+
+    <!-- ══ HUD ══════════════════════════════════════════════════════ -->
+    <div id="hud">
+      <div class="hud-top">
+        <div class="vitals panel">
+          <div class="vrow">
+            <span class="vlabel">HP</span>
+            <div class="bar hp"><i id="barHp"></i></div>
+            <span class="vnum" id="hpNum">100</span>
+          </div>
+          <div class="vrow">
+            <span class="vlabel">ST</span>
+            <div class="bar stam"><i id="barStam"></i></div>
+          </div>
+          <div class="vrow">
+            <span class="vlabel">MKN</span>
+            <div class="bar food"><i id="barFood"></i></div>
+          </div>
+          <div class="vrow">
+            <span class="vlabel">AIR</span>
+            <div class="bar water"><i id="barWater"></i></div>
+          </div>
+        </div>
+
+        <div class="wavebox panel">
+          <div class="wavetitle" id="waveLabel">GELOMBANG 1</div>
+          <div class="wavesub" id="waveSub">memuat…</div>
+        </div>
+
+        <div class="topright">
+          <div class="scoreline"><span>SKOR</span><b id="score">0</b></div>
+          <button id="pauseBtn" class="iconbtn" aria-label="Jeda permainan">
+            <i></i><i></i>
+          </button>
+          <canvas id="minimap" width="168" height="168" aria-label="Peta mini"></canvas>
+        </div>
+      </div>
+
+      <div class="weapon panel" id="weaponCard">
+        <div class="wmain">
+          <div class="wname" id="weaponName">P9</div>
+          <div class="wammo"><b id="ammoMag">12</b><small id="ammoRes">/ 60</small></div>
+        </div>
+        <div class="wslots" id="weaponSlots"></div>
+      </div>
+
+      <div id="banner" class="banner" aria-live="polite"></div>
+      <div id="toasts" aria-live="polite"></div>
+
+      <div class="action-stack">
+        <button class="abtn" id="reloadBtn" data-action="reload" aria-label="Isi ulang">
+          <b>⟳</b><span>ISI</span>
+        </button>
+        <button class="abtn" id="swapBtn" data-action="swap" aria-label="Ganti senjata">
+          <b>⇄</b><span>GANTI</span>
+        </button>
+      </div>
+
+      <button id="interactBtn" class="interact hidden" aria-label="Buka wadah">
+        <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-open"></use></svg>
+        <span id="interactLabel">BUKA</span>
+      </button>
+
+      <div class="quickbar" id="quickbar">
+        <button class="qbtn" data-use="food" aria-label="Makan">
+          <span class="qico"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-food"></use></svg></span>
+          <span class="qname">MAKAN</span><span class="qcount" id="cnt-food">1</span>
+        </button>
+        <button class="qbtn" data-use="water" aria-label="Minum">
+          <span class="qico"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-water"></use></svg></span>
+          <span class="qname">MINUM</span><span class="qcount" id="cnt-water">1</span>
+        </button>
+        <button class="qbtn" data-use="energy" aria-label="Minuman energi">
+          <span class="qico"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-energy"></use></svg></span>
+          <span class="qname">ENERGI</span><span class="qcount" id="cnt-energy">0</span>
+        </button>
+        <button class="qbtn" data-use="medkit" aria-label="Obat">
+          <span class="qico"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-medkit"></use></svg></span>
+          <span class="qname">OBAT</span><span class="qcount" id="cnt-medkit">0</span>
+        </button>
+      </div>
+
+      <div id="hurt"></div>
+      <div id="lowhp"></div>
+      <div id="lowfood"></div>
+    </div>
+
+    <!-- ══ MENU ═════════════════════════════════════════════════════ -->
+    <section id="menu" class="screen">
+      <div class="menu-card">
+        <div class="kicker">● SURVIVAL APOCALYPSE · 2D SHOOTER</div>
+        <h1>KOTA <em>MATI</em></h1>
+        <p class="tagline">
+          Kota sudah jatuh. Bertahan hidup di antara gedung-gedung yang bisa kamu masuki,
+          cari <b>senjata</b>, <b>makanan</b>, dan <b>minuman</b>, lalu lawan gelombang zombie
+          yang makin ganas setiap malam.
+        </p>
+
+        <div class="start-actions">
+          <button id="startBtn" class="primary">MULAI BERTAHAN</button>
+          <button id="tiltBtn" class="secondary">TILT/GYRO: NONAKTIF</button>
+        </div>
+
+        <div class="help-grid">
+          <div><b>GERAK</b><span>Joystick kiri · dorong penuh = lari</span></div>
+          <div><b>TEMBAK</b><span>Joystick kanan · mouse</span></div>
+          <div><b>MASUK GEDUNG</b><span>Jalan lewat pintu bercahaya</span></div>
+          <div><b>LOOT</b><span>Dekati peti → tombol AMBIL / E</span></div>
+          <div><b>SURVIVAL</b><span>MAKAN, MINUM, OBAT di bar bawah</span></div>
+          <div><b>GANTI SENJATA</b><span>Tombol GANTI · angka 1–5</span></div>
+        </div>
+
+        <div class="bestline">
+          <span>REKOR SKOR <b id="bestScore">0</b></span>
+          <span>GELOMBANG <b id="bestWave">0</b></span>
+        </div>
+        <p class="tiny">Tips: gedung menyembunyikanmu dari pandangan, tapi zombie bisa masuk lewat pintu. Jangan lupa isi ulang amunisi sebelum keluar.</p>
+      </div>
+      <div class="menu-foot">PHONE / TABLET · TOUCH CONTROLS · OPTIONAL TILT</div>
+    </section>
+
+    <!-- ══ PAUSE ════════════════════════════════════════════════════ -->
+    <section id="pause" class="screen hidden">
+      <div class="menu-card compact">
+        <div class="kicker">● PERMAINAN DIJEDA</div>
+        <h2>JEDA</h2>
+        <p id="pauseStats" class="pausestats">—</p>
+        <div class="start-actions">
+          <button id="resumeBtn" class="primary">LANJUTKAN</button>
+          <button id="restartBtn" class="secondary">ULANG DARI AWAL</button>
+        </div>
+        <div class="settings">
+          <button id="soundToggle" class="toggle on"><span>Suara</span><i></i></button>
+          <button id="hapticToggle" class="toggle on"><span>Getar</span><i></i></button>
+          <button id="tiltToggle" class="toggle"><span>Tilt / Gyro</span><i></i></button>
+          <div class="sensrow">
+            <label for="sensRange">Sensitivitas tilt</label>
+            <input id="sensRange" type="range" min="0.5" max="2" step="0.1" value="1" />
+            <span id="sensVal">1.0×</span>
+          </div>
+          <button id="calibrateBtn" class="mini-btn">KALIBRASI ULANG TILT</button>
+        </div>
+        <div class="rowbtns">
+          <button id="menuBtn" class="textbtn">KEMBALI KE MENU</button>
+        </div>
+        <p class="tiny">Tilt: miringkan perangkat untuk bergerak. Di iOS, izin sensor diminta saat tombol tilt ditekan.</p>
+      </div>
+    </section>
+
+    <!-- ══ DEAD ═════════════════════════════════════════════════════ -->
+    <section id="dead" class="screen hidden">
+      <div class="menu-card compact dead-card">
+        <div class="kicker red">● KOTA MENANG MALAM INI</div>
+        <h2>KAMU <em>MATI</em></h2>
+        <p id="deadReason" class="pausestats">—</p>
+        <div class="deadstats" id="deadStats"></div>
+        <p class="bestdead" id="bestDead"></p>
+        <div class="start-actions">
+          <button id="retryBtn" class="primary">COBA LAGI</button>
+          <button id="deadMenuBtn" class="secondary">MENU UTAMA</button>
+        </div>
+      </div>
+    </section>
+
+    <div class="scanlines" aria-hidden="true"></div>
+  </div>
+
+  <script type="module" src="js/game.js"></script>
+</body>
+</html>
