@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b0d10" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="description" content="Zona Mati — survival shooter 2D dengan gedung yang bisa dimasuki, senjata, makanan, minuman, dan kontrol sentuh." />
+  <title>ZONA MATI — Survival Shooter</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230b0d10'/%3E%3Ccircle cx='32' cy='32' r='17' fill='none' stroke='%23ff7a3d' stroke-width='5'/%3E%3Cpath d='M32 5v14M32 45v14M5 32h14M45 32h14' stroke='%23ff7a3d' stroke-width='5'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="app">
+    <canvas id="game" aria-label="Area permainan Zona Mati"></canvas>
+
+    <!-- ================= HUD ================= -->
+    <div id="hud">
+      <div class="vitals glass">
+        <div class="vital-row">
+          <span class="vlabel">DARAH</span>
+          <div class="bar hp"><i id="hpFill"></i></div>
+          <b id="hpText">100</b>
+        </div>
+        <div class="vital-row">
+          <span class="vlabel">STAMINA</span>
+          <div class="bar sta"><i id="staFill"></i></div>
+        </div>
+        <div class="mini-bars">
+          <div class="mini" title="Rasa lapar">
+            <span class="mini-ico">&#127830;</span>
+            <div class="bar hunger"><i id="hungerFill"></i></div>
+          </div>
+          <div class="mini" title="Haus">
+            <span class="mini-ico">&#128167;</span>
+            <div class="bar thirst"><i id="thirstFill"></i></div>
+          </div>
+        </div>
+        <div class="consumables">
+          <button class="item-btn" id="btnFood" type="button" aria-label="Makan">
+            <span class="item-ico">&#127830;</span><span class="item-count" id="foodCount">1</span><em>Makan</em>
+          </button>
+          <button class="item-btn" id="btnWater" type="button" aria-label="Minum">
+            <span class="item-ico">&#128167;</span><span class="item-count" id="waterCount">1</span><em>Minum</em>
+          </button>
+          <button class="item-btn" id="btnMed" type="button" aria-label="Pakai obat">
+            <span class="item-ico">&#10010;</span><span class="item-count" id="medCount">0</span><em>Obat</em>
+          </button>
+        </div>
+      </div>
+
+      <button id="pauseBtn" class="icon-btn glass" type="button" aria-label="Jeda">&#10074;&#10074;</button>
+
+      <div class="map-card glass">
+        <div class="map-head">
+          <span id="dayText">HARI 1</span>
+          <span id="clockText">08:00</span>
+        </div>
+        <canvas id="minimap" width="300" height="216" aria-label="Peta mini"></canvas>
+        <div class="objective">
+          <span class="objective-arrow" id="compassArrow">&#9650;</span>
+          <span id="objectiveText">Cari bensin 0/3</span>
+          <span class="objective-dist" id="objectiveDist">—</span>
+        </div>
+        <div class="threat" id="threatText">TENANG</div>
+        <div class="scoreline"><span id="killsText">0 KILL</span><span id="scoreText">0 PTS</span></div>
+      </div>
+
+      <div id="toasts" class="toasts" aria-live="polite"></div>
+
+      <div id="prompt" class="prompt hidden">
+        <span class="prompt-key" id="promptKey">E</span>
+        <span id="promptText">Buka peti</span>
+      </div>
+
+      <div id="weaponBar" class="weapon-bar glass"></div>
+
+      <div id="tiltBadge" class="tilt-badge hidden"><span class="tilt-dot" id="tiltDot"></span>TILT</div>
+
+      <!-- Touch controls -->
+      <div id="touchControls" class="touch-controls">
+        <div class="stick-zone" id="moveZone">
+          <div class="stick-base" id="moveBase"><div class="stick-knob" id="moveKnob"></div></div>
+        </div>
+        <div class="stick-zone right" id="aimZone">
+          <div class="stick-base aim" id="aimBase"><div class="stick-knob aim" id="aimKnob"></div></div>
+        </div>
+        <div class="action-cluster">
+          <button id="btnInteract" class="action-btn" type="button"><span class="action-sym">&#9995;</span><small>AMBIL</small></button>
+          <button id="btnReload" class="action-btn" type="button"><span class="action-sym">&#8635;</span><small>ISI</small></button>
+        </div>
+      </div>
+
+      <div id="crosshair" class="crosshair"><span></span><i id="hitmarker"></i></div>
+      <div id="damageFlash" class="damage-flash"></div>
+      <div id="lowHealth" class="low-health"></div>
+    </div>
+
+    <!-- ================= START ================= -->
+    <div id="startScreen" class="screen">
+      <div class="screen-glow"></div>
+      <div class="menu-wrap">
+        <div class="kicker">SURVIVAL SHOOTER &bull; 2D &bull; TOUCH</div>
+        <h1>ZONA<span>MATI</span></h1>
+        <p class="tagline">Kota sudah jatuh. Cari <b>3 bensin</b>, masuk ke gedung-gedung, kumpulkan senjata dan perbekalan, lalu capai <b>zona evakuasi</b> sebelum malam memakanmu.</p>
+
+        <div class="feature-row">
+          <div class="feature"><b>10</b><span>Gedung bisa dimasuki</span></div>
+          <div class="feature"><b>5</b><span>Senjata</span></div>
+          <div class="feature"><b>3</b><span>Bensin untuk kabur</span></div>
+        </div>
+
+        <button id="startBtn" class="btn primary" type="button">MULAI BERTAHAN</button>
+
+        <div class="menu-actions">
+          <button id="tiltStartBtn" class="btn ghost" type="button">TILT: NONAKTIF</button>
+          <button id="soundStartBtn" class="btn ghost" type="button">SUARA: AKTIF</button>
+        </div>
+
+        <div class="controls-grid">
+          <div class="control-card">
+            <h3>PHONE / TABLET</h3>
+            <p><b>Stik kiri</b> bergerak &bull; <b>stik kanan</b> membidik &amp; menembak otomatis. Dorong penuh untuk lari.</p>
+            <p>Tombol <b>AMBIL</b> untuk mencari barang di gedung. Tombol <b>ISI</b> untuk reload.</p>
+          </div>
+          <div class="control-card">
+            <h3>KEYBOARD / MOUSE</h3>
+            <p><b>WASD</b> bergerak &bull; <b>Mouse</b> bidik &bull; <b>Klik</b> tembak &bull; <b>Shift</b> lari.</p>
+            <p><b>E</b> ambil &bull; <b>R</b> reload &bull; <b>1–5</b> ganti senjata &bull; <b>F</b> makan &bull; <b>G</b> minum &bull; <b>Q</b> obat &bull; <b>Esc</b> jeda.</p>
+          </div>
+        </div>
+
+        <div class="menu-foot">
+          <span id="bestText">Rekor: —</span>
+          <span>Gunakan headphone untuk pengalaman terbaik.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= PAUSE ================= -->
+    <div id="pauseScreen" class="screen hidden">
+      <div class="panel">
+        <div class="kicker">PERMAINAN DIJEDA</div>
+        <h2>JEDA</h2>
+        <button id="resumeBtn" class="btn primary" type="button">LANJUTKAN</button>
+        <div class="panel-row">
+          <button id="tiltPauseBtn" class="btn ghost" type="button">TILT: NONAKTIF</button>
+          <button id="calibrateBtn" class="btn ghost" type="button">KALIBRASI</button>
+        </div>
+        <div class="panel-row">
+          <button id="soundPauseBtn" class="btn ghost" type="button">SUARA: AKTIF</button>
+          <button id="restartBtn" class="btn ghost danger" type="button">ULANGI</button>
+        </div>
+        <button id="quitBtn" class="btn link" type="button">KEMBALI KE MENU</button>
+        <p class="panel-hint">Tilt memakai gerakan perangkat untuk membantu bergerak. Di iPhone/iPad izin gerak akan diminta saat diaktifkan.</p>
+      </div>
+    </div>
+
+    <!-- ================= DEATH ================= -->
+    <div id="deathScreen" class="screen hidden">
+      <div class="panel">
+        <div class="kicker danger-text">SINYAL HILANG</div>
+        <h2>KAMU MATI</h2>
+        <div class="stats" id="deathStats"></div>
+        <button id="retryBtn" class="btn primary" type="button">COBA LAGI</button>
+        <button id="deathQuitBtn" class="btn link" type="button">KEMBALI KE MENU</button>
+      </div>
+    </div>
+
+    <!-- ================= WIN ================= -->
+    <div id="winScreen" class="screen hidden">
+      <div class="panel win">
+        <div class="kicker">EVAKUASI BERHASIL</div>
+        <h2>KAMU KELUAR</h2>
+        <p class="win-copy">Bensin cukup. Gerbang utara terbuka. Kamu meninggalkan kota yang sudah mati — untuk sekarang.</p>
+        <div class="stats" id="winStats"></div>
+        <button id="winRetryBtn" class="btn primary" type="button">MAIN LAGI</button>
+        <button id="winQuitBtn" class="btn link" type="button">KEMBALI KE MENU</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>
